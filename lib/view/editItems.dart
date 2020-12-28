@@ -49,10 +49,10 @@ class _EditItemState extends State<EditItem> {
                   ),
                   title: new TextFormField(
                     controller: controllerName,
-                    validator: (value){
-                      if (value.isEmpty){
+                    validator: (value) {
+                      if (value.isEmpty) {
                         return 'Ingrese nombre';
-                      }else {
+                      } else {
                         return null;
                       }
                     },
@@ -73,7 +73,7 @@ class _EditItemState extends State<EditItem> {
                   title: new TextFormField(
                     controller: controllerDescription,
                     validator: (value) {
-                      if (value.isEmpty){
+                      if (value.isEmpty) {
                         return "Ingresa una Descripcion";
                       }
                       return null;

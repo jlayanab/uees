@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
     var jsonResponse = null;
 
     var response = await http
-        .post("http://192.168.100.21:3000/api/v1/authenticate", body: data);
+        .post("http://192.168.100.26:3000/api/v1/authenticate", body: data);
     if (response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
       print('Response status: ${response.statusCode}');

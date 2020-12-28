@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DataBaseHelper {
-  String serverUrl = "http://192.168.100.21:3000/api/v1";
-  String serverUrlitems = "http://192.168.100.21:3000/api/items";
+  String serverUrl = "http://192.168.100.26:3000/api/v1";
+  String serverUrlitems = "http://192.168.100.26:3000/api/items";
 
   var status;
   var token;
@@ -60,7 +60,7 @@ class DataBaseHelper {
     final key = 'token';
     final value = prefs.get(key) ?? 0;
 
-    String myUrl = "http://192.168.100.21:3000/api/v1/items/$id";
+    String myUrl = "http://192.168.100.26:3000/api/v1/items/$id";
 
     http.put(myUrl, headers: {
       'Accept': 'application/json',
@@ -98,7 +98,7 @@ class DataBaseHelper {
     final key = 'token';
     final value = prefs.get(key) ?? 0;
 
-    String myUrl = "http://192.168.100.21:3000/api/v1/items/$id";
+    String myUrl = "http://192.168.100.26:3000/api/v1/items/$id";
 
     http.Response response = await http.delete(myUrl, headers: {
       'Accept': 'application/json',
@@ -136,5 +136,23 @@ class DataBaseHelper {
     final key = 'token';
     final value = prefs.get(key) ?? 0;
     print('read : $value');
+  }
+
+//Funcion guardar imagen
+  loadImage(String avatar) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'token';
+    final value = prefs.get(key) ?? 0;
+
+    String myUser = "http://192.168.100.26:3000/api/v1/users/7";
+
+    http.Response response = await http.patch(myUser, headers: {
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $value'
+    }, body: {
+      "avatar": "$avatar"
+    });
+
+    return (response.body);
   }
 }

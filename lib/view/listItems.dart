@@ -20,7 +20,7 @@ class _ListItemsState extends State<ListItems> {
     final key = 'token';
     final value = prefs.get(key) ?? 0;
 
-    String myUrl = "http://192.168.100.21:3000/api/v1/items";
+    String myUrl = "http://192.168.100.26:3000/api/v1/items";
 
     http.Response response = await http.get(myUrl, headers: {
       'Accept': 'application/json',

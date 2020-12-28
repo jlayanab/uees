@@ -1,3 +1,9 @@
+import 'dart:ffi';
+import 'dart:io';
+import 'dart:ui';
+import 'package:path/path.dart' as path;
+//import 'package:path_provider/path_provider.dart';
+import 'package:gallery_saver/gallery_saver.dart';
 import 'package:uees/view/addUser.dart';
 import 'package:uees/view/additems.dart';
 import 'package:uees/view/listItems.dart';
@@ -5,6 +11,8 @@ import 'package:uees/view/login.dart';
 import 'package:uees/view/generate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uees/Cotrollers/databasehelpers.dart';
 
 void main() => runApp(MyApp());
 
@@ -28,10 +36,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  DataBaseHelper databasehelper = new DataBaseHelper();
   SharedPreferences sharedPreferences;
+  ImagePicker imagePicker = ImagePicker();
+  String firstButtonText = 'Tomar Foto';
+  String albumName = 'Media';
+  //String avatar = 'Almacenamiento interno/Media/prueba.jpg';
+  //TextEditingController controllerAvatar;
 
   @override
   void initState() {
+    //controllerAvatar = new TextEditingController();
     super.initState();
     checkLoginStatus();
   }
@@ -43,6 +58,53 @@ class _MainPageState extends State<MainPage> {
           MaterialPageRoute(builder: (BuildContext context) => LoginPage()),
           (Route<dynamic> route) => false);
     }
+  }
+
+  Future<Void> optionsDialog() {
+    return (showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                GestureDetector(child: Text('Tomar Foto'), onTap: openCamera),
+                Padding(padding: EdgeInsets.all(10.0)),
+                GestureDetector(
+                    child: Text('Seleccionar de Galería'), onTap: openGallery),
+              ],
+            ),
+          ));
+        }));
+  }
+
+  void openCamera() async {
+    ImagePicker.pickImage(source: ImageSource.camera).then((File picture) {
+      if (picture != null && picture.path != null) {
+        setState(() {
+          firstButtonText = 'Guardando en proceso...';
+        });
+        GallerySaver.saveImage(picture.path, albumName: albumName)
+            .then((bool success) {
+          setState(() {
+            firstButtonText = 'Imagen guardada!';
+            String dir = path.dirname(picture.path);
+            String newPath = path.join(dir, 'Shingekynokiojin.jpg');
+            print('newPath: $newPath');
+            picture.renameSync(newPath);
+          });
+        });
+      }
+    });
+  }
+
+  void openGallery() async {
+    ImagePicker.pickImage(source: ImageSource.gallery).then((File picture) {
+      String dir = path.dirname(picture.path);
+      String newPath = path.join(dir, 'Shingekynokiojin.jpg');
+      print('newPath : $newPath ');
+      picture.renameSync(newPath);
+    });
   }
 
   @override
@@ -72,27 +134,51 @@ class _MainPageState extends State<MainPage> {
             Color.fromRGBO(135, 22, 52, 1)
           ], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         ),
-        child: Center(
-            child: Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 100.0),
-              child: RaisedButton(
-                  color: Colors.deepOrange,
-                  textColor: Colors.white,
-                  splashColor: Colors.blueGrey,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => GenerateScreen()),
-                    );
-                  },
-                  child: const Text('GENERAR CODIGO QR')),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                new RaisedButton(
+                    color: Colors.red[300],
+                    textColor: Colors.white,
+                    splashColor: Colors.blueGrey,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => GenerateScreen()),
+                      );
+                    },
+                    child: const Text('GENERAR CÓDIGO QR')),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                new RaisedButton(
+                    color: Colors.red[300],
+                    textColor: Colors.white,
+                    splashColor: Colors.blueGrey,
+                    onPressed: optionsDialog,
+                    child: const Text('SUBIR FOTO')),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                new RaisedButton(
+                    color: Colors.red[300],
+                    textColor: Colors.white,
+                    splashColor: Colors.blueGrey,
+                    onPressed: () => databasehelper.loadImage(
+                        '/data/user/0/com.example.uees/cache/prueba.jpg'),
+                    child: const Text('FOTO')),
+              ],
             ),
           ],
-        )),
+        ),
       ),
       drawer: Drawer(
         child: new ListView(
