@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GenerateScreen extends StatefulWidget {
   @override
@@ -16,23 +17,48 @@ class GenerateScreen extends StatefulWidget {
 class GenerateScreenState extends State<GenerateScreen> {
   static const double _topSectionTopPadding = 50.0;
   static const double _topSectionBottomPadding = 20.0;
-  static const double _topSectionHeight = 50.0;
+  //static const double _topSectionHeight = 50.0;
+  String _dataString; //variable donde se guarda el código QR generado
+  SharedPreferences sharedPreferences;
 
   GlobalKey globalKey = new GlobalKey();
-  String _dataString = "0920795317";
-  String _inputErrorText;
-  final TextEditingController _textController = TextEditingController();
+  //String _inputErrorText;
+
+  //final TextEditingController _textController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    mostrarDatos();
+  }
+
+  //Toma el valor de Identification por medio de SharedPreference
+  Future guardarDatos() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    var jsonResponse;
+    sharedPreferences.setString(
+        "Identification", jsonResponse['Identification']);
+  }
+
+  //Guarda el valor de Identification en una variable llamada _dataString
+  Future mostrarDatos() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    setState(() {
+      _dataString = sharedPreferences.getString("Identification");
+    });
+    print(_dataString);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Codigo QR'),
+        title: Text('Código QR'),
         backgroundColor: Color.fromRGBO(62, 15, 31, 1),
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.share),
-            onPressed: _captureAndSharePng,
+            onPressed: _captureAndSharePng ?? "",
           )
         ],
       ),
@@ -73,43 +99,44 @@ class GenerateScreenState extends State<GenerateScreen> {
               right: 10.0,
               bottom: _topSectionBottomPadding,
             ),
-            child: Container(
-              height: _topSectionHeight,
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: InputDecoration(
-                        hintText: "Enter a custom message",
-                        errorText: _inputErrorText,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10.0),
-                    child: FlatButton(
-                      child: Text("SUBMIT"),
-                      onPressed: () {
-                        setState(() {
-                          _dataString = _textController.text;
-                          _inputErrorText = null;
-                        });
-                      },
-                    ),
-                  )
-                ],
-              ),
-            ),
+            //child: Container(
+            //height: _topSectionHeight,
+            //child: Row(
+            //mainAxisSize: MainAxisSize.max,
+            //crossAxisAlignment: CrossAxisAlignment.stretch,
+            //children: <Widget>[
+            //Expanded(
+            //child: TextField(
+            //controller: _textController,
+            //decoration: InputDecoration(
+            //hintText: "Enter a custom message",
+            //errorText: _inputErrorText,
+            //),
+            //),
+            //),
+            //Padding(
+            //padding: const EdgeInsets.only(left: 10.0),
+            //child: FlatButton(
+            //child: Text("SUBMIT"),
+            //onPressed: () {
+            //setState(() {
+            //dataString = _textController.text;
+            //inputErrorText = null;
+            //});
+            //},
+            //),
+            //)
+            //],
+            //),
+            //),
           ),
           Expanded(
             child: Center(
               child: RepaintBoundary(
                 key: globalKey,
                 child: QrImage(
-                  data: _dataString,
+                  data: _dataString ??
+                      "", //Genera código QR mediante el valor de Identification
                   size: 0.5 * bodyHeight,
                 ),
               ),

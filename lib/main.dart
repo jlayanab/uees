@@ -2,17 +2,14 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:ui';
 import 'package:path/path.dart' as path;
-//import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
-import 'package:uees/view/addUser.dart';
-import 'package:uees/view/additems.dart';
-import 'package:uees/view/listItems.dart';
 import 'package:uees/view/login.dart';
 import 'package:uees/view/generate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uees/Cotrollers/databasehelpers.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 void main() => runApp(MyApp());
 
@@ -22,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "Registro UEES",
       debugShowCheckedModeBanner: false,
-      home: MainPage(),
+      home: LoginPage(),
       theme: ThemeData(
           primaryColor: Color.fromRGBO(62, 15, 31, 1),
           accentColor: Colors.white70),
@@ -37,29 +34,38 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   DataBaseHelper databasehelper = new DataBaseHelper();
+  String usuario, newPath, albumName = 'Media';
   SharedPreferences sharedPreferences;
-  ImagePicker imagePicker = ImagePicker();
-  String firstButtonText = 'Tomar Foto';
-  String albumName = 'Media';
-  //String avatar = 'Almacenamiento interno/Media/prueba.jpg';
-  //TextEditingController controllerAvatar;
+  File imagepicture, image;
+  final picketFile = ImagePicker();
+  bool visibilityController = false; //booleano para visualizar button
 
   @override
   void initState() {
-    //controllerAvatar = new TextEditingController();
     super.initState();
     checkLoginStatus();
+    mostrarUsuario();
   }
 
   checkLoginStatus() async {
     sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getString("token") == null) {
+    if (sharedPreferences.getInt("id") == null) {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => LoginPage()),
           (Route<dynamic> route) => false);
     }
+    //condición para visualizacion del button
+    if (sharedPreferences.getBool("avatar") == false) {
+      visibilityController = true;
+    }
+    //condición para agregar las imagenes a la nueva tabla
+    if (sharedPreferences.getString("file") != null) {
+      databasehelper.saveImage(
+          sharedPreferences.getInt("id"), sharedPreferences.getString("file"));
+    }
   }
 
+  //cuadro de selección para uso de cámara o galería
   Future<Void> optionsDialog() {
     return (showDialog(
         context: context,
@@ -78,33 +84,91 @@ class _MainPageState extends State<MainPage> {
         }));
   }
 
-  void openCamera() async {
-    ImagePicker.pickImage(source: ImageSource.camera).then((File picture) {
-      if (picture != null && picture.path != null) {
-        setState(() {
-          firstButtonText = 'Guardando en proceso...';
-        });
-        GallerySaver.saveImage(picture.path, albumName: albumName)
-            .then((bool success) {
-          setState(() {
-            firstButtonText = 'Imagen guardada!';
-            String dir = path.dirname(picture.path);
-            String newPath = path.join(dir, 'Shingekynokiojin.jpg');
-            print('newPath: $newPath');
-            picture.renameSync(newPath);
-          });
-        });
-      }
-    });
+  //toma el email por medio de sharedpreferences
+  Future guardarUsuario() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    var jsonResponse;
+    sharedPreferences.setString("email", jsonResponse['email']);
   }
 
-  void openGallery() async {
-    ImagePicker.pickImage(source: ImageSource.gallery).then((File picture) {
-      String dir = path.dirname(picture.path);
-      String newPath = path.join(dir, 'Shingekynokiojin.jpg');
-      print('newPath : $newPath ');
-      picture.renameSync(newPath);
+  //guarda el email obtendido por sharedpreferences
+  Future mostrarUsuario() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    setState(() {
+      usuario = sharedPreferences.getString("email");
     });
+    print(usuario);
+  }
+
+  //funcion para usar camara del dispositivo y tomar foto
+  void openCamera() async {
+    final picture = await picketFile.getImage(
+        source: ImageSource.camera,
+        imageQuality: 100, //calidad de imagen
+        maxWidth: 1450, //ancho de imagen
+        maxHeight: 1275); //alto de imagen
+    image = File(picture.path); //si existe una ruta abrir editor de imagen
+    if (image != null) {
+      //condición para abrir el editor de imagen
+      cropImage(image);
+    }
+    Navigator.pop(context);
+  }
+
+  //funcion para usar galeria del dispositivo y seleccionar imagen
+  void openGallery() async {
+    final picture = await picketFile.getImage(
+        source: ImageSource.gallery,
+        imageQuality: 100, //calidad e imagen
+        maxWidth: 1450, //ancho de imagen
+        maxHeight: 1275); //alto de imagen
+    image = File(picture.path); //si existe una ruta abrir editor de imagen
+    if (image != null) {
+      //condición para abrir el editor de imagen
+      cropImage(image);
+    }
+    Navigator.pop(context);
+  }
+
+  //funcion para editar imagen seleccionada de camara y galeria
+  cropImage(File picture) async {
+    File cropped = await ImageCropper.cropImage(
+      androidUiSettings: AndroidUiSettings(
+        statusBarColor: Colors.pink[900],
+        toolbarColor: Colors.pink[900],
+        cropGridColor: Colors.pink[900],
+        activeControlsWidgetColor: Colors.pink[900],
+        toolbarTitle: "Editor de Foto",
+        toolbarWidgetColor: Colors.white,
+      ),
+      sourcePath: picture.path,
+      aspectRatioPresets: [
+        CropAspectRatioPreset.square,
+        CropAspectRatioPreset.ratio3x2, //dimensiones para la imagen
+        CropAspectRatioPreset.original, //dimensiones para la imagen
+        CropAspectRatioPreset.ratio16x9, //dimensiones para la imagen
+        CropAspectRatioPreset.ratio4x3, //dimensiones para la imagen
+      ],
+      maxWidth: 700,
+    );
+    if (cropped != null) {
+      setState(() {
+        imagepicture = cropped;
+        GallerySaver.saveImage(imagepicture.path,
+                albumName:
+                    albumName) //guarda imagen en la galería de dispositivo
+            .then((bool success) {
+          setState(() {
+            String dir =
+                path.dirname(imagepicture.path); //guarda ruta de imagen
+            newPath = path.join(dir, 'avatar.jpg'); //cambia nombre de imagen
+            print('newPath: $newPath');
+            imagepicture.renameSync(newPath); //renombra la ruta de la imagen
+            databasehelper.loadImage(newPath); //guarda la imagen en la base
+          });
+        });
+      });
+    }
   }
 
   @override
@@ -117,7 +181,6 @@ class _MainPageState extends State<MainPage> {
           FlatButton(
             onPressed: () {
               sharedPreferences.clear();
-              sharedPreferences.commit();
               Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
                       builder: (BuildContext context) => LoginPage()),
@@ -141,7 +204,7 @@ class _MainPageState extends State<MainPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 new RaisedButton(
-                    color: Colors.red[300],
+                    color: Colors.pink[900],
                     textColor: Colors.white,
                     splashColor: Colors.blueGrey,
                     onPressed: () {
@@ -157,24 +220,15 @@ class _MainPageState extends State<MainPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                new RaisedButton(
-                    color: Colors.red[300],
-                    textColor: Colors.white,
-                    splashColor: Colors.blueGrey,
-                    onPressed: optionsDialog,
-                    child: const Text('SUBIR FOTO')),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                new RaisedButton(
-                    color: Colors.red[300],
-                    textColor: Colors.white,
-                    splashColor: Colors.blueGrey,
-                    onPressed: () => databasehelper.loadImage(
-                        '/data/user/0/com.example.uees/cache/prueba.jpg'),
-                    child: const Text('FOTO')),
+                //se muestra el button mediante una condicion
+                Visibility(
+                    visible: visibilityController,
+                    child: new RaisedButton(
+                        color: Colors.pink[900],
+                        textColor: Colors.white,
+                        splashColor: Colors.blueGrey,
+                        onPressed: optionsDialog,
+                        child: const Text('SUBIR FOTO')))
               ],
             ),
           ],
@@ -184,45 +238,36 @@ class _MainPageState extends State<MainPage> {
         child: new ListView(
           children: <Widget>[
             new UserAccountsDrawerHeader(
-              accountName: new Text('IEE Proyectos'),
-              accountEmail: new Text('jlayana@ieeproyectos.com'),
-              // decoration: new BoxDecoration(
-              //   image: new DecorationImage(
-              //     fit: BoxFit.fill,
-              //    // image: AssetImage('img/estiramiento.jpg'),
-              //   )
-              // ),
+              //muestra email de usuario actual en la pantalla de inicio
+              accountName: new Text('UEES'),
+              accountEmail: Text(usuario ?? ""),
+              currentAccountPicture: GestureDetector(
+                child: CircleAvatar(
+                  //muestra imagen en la pantalla de inicio
+                  backgroundColor: Colors.black,
+                  backgroundImage: NetworkImage(
+                      'https://pbs.twimg.com/profile_images/1212815999470358534/2eqDVz0n.jpg'),
+                ),
+              ),
             ),
-            new ListTile(
-              title: new Text("Listar Items"),
-              trailing: new Icon(Icons.help),
-              onTap: () => Navigator.of(context).push(new MaterialPageRoute(
-                builder: (BuildContext context) => ListItems(),
-              )),
-            ),
-            new ListTile(
-              title: new Text("Adicionar Items"),
-              trailing: new Icon(Icons.help),
-              onTap: () => Navigator.of(context).push(new MaterialPageRoute(
-                builder: (BuildContext context) => AddDataItem(),
-              )),
-            ),
+            //new ListTile(
+            //title: new Text(""),
+            //trailing: new Icon(Icons.help),
+            //onTap: () => Navigator.of(context).push(new MaterialPageRoute(
+            //  builder: (BuildContext context) => ListItems(),
+            //)),
+            //    ),
             new Divider(),
             new ListTile(
-              title: new Text("Registro de Usuarios"),
-              trailing: new Icon(Icons.help),
-              onTap: () => Navigator.of(context).push(new MaterialPageRoute(
-                builder: (BuildContext context) => AddUser(),
-              )),
-            ),
-            // new Divider(),
-            // new ListTile(
-            //   title: new Text("Mostrar listado"),
-            //   trailing: new Icon(Icons.help),
-            //   onTap: () => Navigator.of(context).push(new MaterialPageRoute(
-            //     builder: (BuildContext context) => ShowData(),
-            //   )),
-            // ),
+                title: new Text("Log Out"),
+                trailing: new Icon(Icons.logout),
+                onTap: () {
+                  sharedPreferences.clear();
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (BuildContext context) => LoginPage()),
+                      (Route<dynamic> route) => false);
+                }),
           ],
         ),
       ),

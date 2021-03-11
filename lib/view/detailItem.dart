@@ -4,8 +4,8 @@ import 'package:uees/view/editItems.dart';
 import 'package:uees/view/listItems.dart';
 
 class Detail extends StatefulWidget {
-  List list;
-  int index;
+  final List list;
+  final int index;
   Detail({this.index, this.list});
 
   @override
@@ -96,7 +96,8 @@ class _DetailState extends State<Detail> {
                     new RaisedButton(
                         child: new Text("Delete"),
                         color: Colors.redAccent,
-                        shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
+                        shape: new RoundedRectangleBorder(
+                            borderRadius: new BorderRadius.circular(30.0)),
                         onPressed: () => confirm()),
                   ],
                 ),

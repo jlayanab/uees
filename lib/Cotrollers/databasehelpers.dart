@@ -1,10 +1,12 @@
+//import 'dart:io';
+//import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DataBaseHelper {
-  String serverUrl = "http://192.168.100.26:3000/api/v1";
-  String serverUrlitems = "http://192.168.100.26:3000/api/items";
+  String serverUrl = "http://181.39.198.36:3000/api/v1";
+  String serverUrlitems = "http://181.39.198.36:3000/api/items";
 
   var status;
   var token;
@@ -45,7 +47,7 @@ class DataBaseHelper {
     status = respose.body.contains('error');
 
     var data = json.decode(respose.body);
-    TODO: //Resolver problema de token
+    //Resolver problema de token
     if (status) {
       print('data : ${data["error"]}');
     } else {
@@ -54,13 +56,13 @@ class DataBaseHelper {
     }
   }
 
-  //function for update or put
+  //function for update or put Items
   void editarData(String id, String nombre, String descripcion) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'token';
     final value = prefs.get(key) ?? 0;
 
-    String myUrl = "http://192.168.100.26:3000/api/v1/items/$id";
+    String myUrl = "http://181.39.198.36:3000/api/v1/items/$id";
 
     http.put(myUrl, headers: {
       'Accept': 'application/json',
@@ -98,7 +100,7 @@ class DataBaseHelper {
     final key = 'token';
     final value = prefs.get(key) ?? 0;
 
-    String myUrl = "http://192.168.100.26:3000/api/v1/items/$id";
+    String myUrl = "http://181.39.198.36:3000/api/v1/items/$id";
 
     http.Response response = await http.delete(myUrl, headers: {
       'Accept': 'application/json',
@@ -123,7 +125,7 @@ class DataBaseHelper {
     return json.decode(response.body);
   }
 
-//Funcion guardar
+//Función guardar
   _save(String token) async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'token';
@@ -131,6 +133,7 @@ class DataBaseHelper {
     prefs.setString(key, value);
   }
 
+//Función leer
   read() async {
     final prefs = await SharedPreferences.getInstance();
     final key = 'token';
@@ -138,21 +141,75 @@ class DataBaseHelper {
     print('read : $value');
   }
 
-//Funcion guardar imagen
+//Función update y agregar avatar al usuario
   loadImage(String avatar) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     final prefs = await SharedPreferences.getInstance();
     final key = 'token';
     final value = prefs.get(key) ?? 0;
+    final id =
+        sharedPreferences.getInt("id"); //Toma valor de id por sharedPreference
 
-    String myUser = "http://192.168.100.26:3000/api/v1/users/7";
+    String myUser = "http://181.39.198.36:3000/api/v1/users/$id";
 
-    http.Response response = await http.patch(myUser, headers: {
+    var headers = {
       'Accept': 'application/json',
       'Authorization': 'Bearer $value'
-    }, body: {
-      "avatar": "$avatar"
-    });
+    };
+    var request = http.MultipartRequest('PUT', Uri.parse(myUser));
+    request.files
+        .add(await http.MultipartFile.fromPath('user[avatar]', '$avatar'));
+    request.headers.addAll(headers);
 
-    return (response.body);
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
+
+  //Funcion para agregar Usuarios o registrarse
+  registrarUser(dynamic usuario, dynamic clave, String identification,
+      String nombres, String apellidos) async {
+    var headers = {'Content-Type': 'application/json'};
+    var request = http.Request(
+        'POST', Uri.parse('http://181.39.198.36:3000/api/v1/users'));
+    request.body =
+        '''{\n    "user":{\n        "email":"$usuario",\n        "password":"$clave",\n        "Identification":"$identification",\n        "Nombres":"$nombres",\n        "Apellidos":"$apellidos"\n    }\n}''';
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
+
+//Función para guardar las rutas de las imágenes de los usuarios y los ids
+  saveImage(id, String ruta) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'token';
+    final value = prefs.get(key) ?? 0;
+    var headers = {
+      'Authorization': 'Bearer Bearer $value',
+      'Content-Type': 'application/json'
+    };
+    var request = http.Request(
+        'POST', Uri.parse('http://181.39.198.36:3000/api/v1/images'));
+    request.body =
+        '''{\n    "image": {\n        "users_id":$id,\n        "ruta": "$ruta",\n        "status": "Created"\n    }\n}''';
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+    } else {
+      print(response.reasonPhrase);
+    }
   }
 }
