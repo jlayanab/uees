@@ -46,14 +46,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   //Función para iniciar sesión por el web service Uees
-  signInUees(String usuario, clave) async {
+  signInUees(String rol, codigo) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     var jsonResponse;
-    String mUrl = "http://200.1.161.199:8080/apiApp/informacion/usuario/login";
-    Map<String, String> queryParams = {
-      'usuario': '$usuario',
-      'clave': '$clave'
-    };
+    String mUrl = "http://app.uees.edu.ec:3000/datosEmpleados";
+    //Map<String, String> queryParams = {'rol': '$rol', 'codigo': '$codigo'};
+    Map<String, String> queryParams = {'rol': '3', 'codigo': '0926072372'};
     String queryString = Uri(queryParameters: queryParams).query;
     var requestUrl = mUrl + '?' + queryString;
 
@@ -68,9 +66,9 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
         });
         //guarda datos del usuario logueado por sharedPreferences
-        sharedPreferences.setString("cod_usuario", jsonResponse['cod_usuario']);
+        sharedPreferences.setString("cod_usuario", jsonResponse['codigo']);
         sharedPreferences.setString(
-            "cod_identificacion", jsonResponse['cod_identificacion']);
+            "cod_identificacion", jsonResponse['codigo']);
         sharedPreferences.setString("nombres", jsonResponse['nombres']);
         sharedPreferences.setString("apellidos", jsonResponse['apellidos']);
         Navigator.of(context).pushAndRemoveUntil(
