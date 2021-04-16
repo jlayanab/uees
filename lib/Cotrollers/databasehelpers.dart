@@ -171,13 +171,12 @@ class DataBaseHelper {
   }
 
   //Funcion para agregar Usuarios o registrarse
-  registrarUser(dynamic usuario, dynamic clave, String identification,
-      String nombres, String apellidos) async {
+  registrarUser(dynamic usuario, dynamic clave) async {
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request(
         'POST', Uri.parse('http://181.39.198.36:3000/api/v1/users'));
     request.body =
-        '''{\n    "user":{\n        "email":"$usuario",\n        "password":"$clave",\n        "Identification":"$identification",\n        "Nombres":"$nombres",\n        "Apellidos":"$apellidos"\n    }\n}''';
+        '''{\n    "user":{\n        "email":"$usuario",\n        "password":"$clave",\n    }\n}''';
     request.headers.addAll(headers);
 
     http.StreamedResponse response = await request.send();

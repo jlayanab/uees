@@ -10,9 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uees/Cotrollers/databasehelpers.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:uees/view/confirmation.dart';
+//import 'package:http/http.dart' as http;
+//import 'dart:convert';
+//import 'package:uees/view/confirmation.dart';
 
 void main() => runApp(MyApp());
 
@@ -58,11 +58,12 @@ class _MainPageState extends State<MainPage> {
 
   checkLoginStatus() async {
     sharedPreferences = await SharedPreferences.getInstance();
-    if (sharedPreferences.getInt("id") == null) {
+    if (sharedPreferences.getString("codigo") == null) {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (BuildContext context) => LoginPage()),
           (Route<dynamic> route) => false);
     }
+
     //condición para visualizacion del button
     if (sharedPreferences.getBool("avatar") == false) {
       visibilityController = true;
@@ -72,48 +73,16 @@ class _MainPageState extends State<MainPage> {
       databasehelper.saveImage(
           sharedPreferences.getInt("id"), sharedPreferences.getString("file"));
     }
-  }
-
-  getLoginInfo() async {
-    signInUees('3', '0926072372');
-  }
-
-  signInUees(String rol, String codigo) async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    var jsonResponse;
-    String mUrl = "http://app.uees.edu.ec:3000/datosEmpleados";
-    Map<String, String> queryParams = {'rol': '$rol', 'codigo': '$codigo'};
-    String queryString = Uri(queryParameters: queryParams).query;
-    var requestUrl = mUrl + '?' + queryString;
-
-    http.Response response = await http.get(requestUrl);
-
-    if (response.statusCode == 200) {
-      jsonResponse = json.decode(response.body.toString());
-      print(response.statusCode);
-      print(json.decode(response.body));
-      if (jsonResponse != null) {
-        //setState(() {
-        //  _isLoading = false;
-        //});
-        //guarda datos del usuario logueado por sharedPreferences
-        sharedPreferences.setString("cod_usuario", jsonResponse['codigo']);
-        sharedPreferences.setString(
-            "cod_identificacion", jsonResponse['codigo']);
-        sharedPreferences.setString("nombres", jsonResponse['nombres']);
-        sharedPreferences.setString("apellidos", jsonResponse['apellidos']);
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (BuildContext context) => Confirmation()),
-            (Route<dynamic> route) => false);
-      }
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      print(response.body.toString());
+    ////Funcion para registrar el usuario al Rails////
+    if (sharedPreferences.getString("codigo") != null) {
+      databasehelper.registrarUser(sharedPreferences.getString("codigo"),
+          sharedPreferences.getString("codigo"));
     }
   }
+
+  //getLoginInfo() async {
+  //  signInUees('3', '0926072372');
+  //}
 
   //cuadro de selección para uso de cámara o galería
   Future<void> optionsDialog() {

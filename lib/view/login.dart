@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uees/main.dart';
-import 'package:uees/view/confirmation.dart';
+//import 'package:uees/view/confirmation.dart';
 //import 'package:uees/view/confirmation.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,9 +15,9 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
-  final TextEditingController emailController =
+  final TextEditingController rolController =
       new TextEditingController(); //Guarda valor de email ingresado por el usuario por pantalla
-  final TextEditingController passwordController =
+  final TextEditingController codigoController =
       new TextEditingController(); //Guarda valor de password ingresado por el usuario por pantalla
 
   @override
@@ -46,12 +46,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   //Función para iniciar sesión por el web service Uees
-  signInUees(String rol, codigo) async {
+  signInUees(String rol, String codigo) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     var jsonResponse;
     String mUrl = "http://app.uees.edu.ec:3000/datosEmpleados";
-    //Map<String, String> queryParams = {'rol': '$rol', 'codigo': '$codigo'};
-    Map<String, String> queryParams = {'rol': '3', 'codigo': '0926072372'};
+    Map<String, String> queryParams = {'rol': '$rol', 'codigo': '$codigo'};
     String queryString = Uri(queryParameters: queryParams).query;
     var requestUrl = mUrl + '?' + queryString;
 
@@ -62,18 +61,17 @@ class _LoginPageState extends State<LoginPage> {
       print(response.statusCode);
       print(json.decode(response.body));
       if (jsonResponse != null) {
-        setState(() {
-          _isLoading = false;
-        });
+        //setState(() {
+        //  _isLoading = false;
+        //});
         //guarda datos del usuario logueado por sharedPreferences
-        sharedPreferences.setString("cod_usuario", jsonResponse['codigo']);
-        sharedPreferences.setString(
-            "cod_identificacion", jsonResponse['codigo']);
+        sharedPreferences.setString("codigo", jsonResponse['codigo']);
+        sharedPreferences.setString("apellido", jsonResponse['apellido']);
         sharedPreferences.setString("nombres", jsonResponse['nombres']);
-        sharedPreferences.setString("apellidos", jsonResponse['apellidos']);
+        sharedPreferences.setString("facultad", jsonResponse['facultad']);
+        sharedPreferences.setString("rolDesc", jsonResponse['rolDesc']);
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (BuildContext context) => Confirmation()),
+            MaterialPageRoute(builder: (BuildContext context) => MainPage()),
             (Route<dynamic> route) => false);
       }
     } else {
@@ -113,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } //condicion para verificar si el usuario existe o inicia sesion desde web service
     else if (response.statusCode == 401) {
-      signInUees(emailController.text, passwordController.text);
+      //signInUees(emailController.text, passwordController.text);
     }
   }
 
@@ -124,18 +122,18 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.symmetric(horizontal: 15.0),
       margin: EdgeInsets.only(top: 15.0),
       child: RaisedButton(
-        onPressed: emailController.text == "" || passwordController.text == ""
+        onPressed: rolController.text == "" || codigoController.text == ""
             ? null
             : () async {
                 setState(() {
                   _isLoading = true;
                 });
-                signIn(emailController.text, passwordController.text);
+                signInUees(rolController.text, codigoController.text);
                 //guarda valores de email y password del inicio de sesion por sharedpreferences
                 SharedPreferences sharedPreferences =
                     await SharedPreferences.getInstance();
-                sharedPreferences.setString("email", emailController.text);
-                sharedPreferences.setString("pass", passwordController.text);
+                sharedPreferences.setString("rol", rolController.text);
+                sharedPreferences.setString("codigo", codigoController.text);
               },
         elevation: 0.0,
         color: Colors.pink[900],
@@ -151,12 +149,12 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         children: <Widget>[
           TextFormField(
-            controller: emailController,
+            controller: rolController,
             cursorColor: Colors.white,
             style: TextStyle(color: Colors.white70),
             decoration: InputDecoration(
-              icon: Icon(Icons.email, color: Colors.white70),
-              hintText: "Usuario",
+              icon: Icon(Icons.group, color: Colors.white70),
+              hintText: "Rol",
               border: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70)),
               hintStyle: TextStyle(color: Colors.white70),
@@ -164,13 +162,13 @@ class _LoginPageState extends State<LoginPage> {
           ),
           SizedBox(height: 30.0),
           TextFormField(
-            controller: passwordController,
+            controller: codigoController,
             cursorColor: Colors.white,
-            obscureText: true,
+            //obscureText: true,
             style: TextStyle(color: Colors.white70),
             decoration: InputDecoration(
-              icon: Icon(Icons.lock, color: Colors.white70),
-              hintText: "Password",
+              icon: Icon(Icons.perm_contact_cal, color: Colors.white70),
+              hintText: "Cédula",
               border: UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70)),
               hintStyle: TextStyle(color: Colors.white70),

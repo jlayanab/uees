@@ -47,7 +47,7 @@ class _DetailState extends State<Detail> {
       ],
     );
 
-    showDialog(context: context, child: alertDialog);
+    //showDialog(context: context, child: alertDialog);
   }
 
   @override

@@ -40,11 +40,9 @@ class _ConfirmationState extends State<Confirmation> {
     if (sharedPreferences.getString("nombres") != null) {
       print(sharedPreferences.getString("nombres"));
       databasehelper.registrarUser(
-          sharedPreferences.getString("email"),
-          sharedPreferences.getString("pass"),
-          sharedPreferences.getString("cod_identificacion"),
-          sharedPreferences.getString("nombres"),
-          sharedPreferences.getString("apellidos"));
+        sharedPreferences.getString("email"),
+        sharedPreferences.getString("pass"),
+      );
     }
   }
 
